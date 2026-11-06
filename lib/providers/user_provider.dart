@@ -245,6 +245,16 @@ class User extends _$User {
     userState = user.copyWith(seerrCredentials: updated);
   }
 
+  void setSeerrLocalServerUrl(String? value) {
+    final user = state;
+    if (user == null) return;
+    final trimmed = value?.trim() ?? '';
+    final updated = (user.seerrCredentials ?? const SeerrCredentialsModel()).copyWith(
+      localServerUrl: trimmed.isEmpty ? '' : normalizeUrl(trimmed),
+    );
+    userState = user.copyWith(seerrCredentials: updated);
+  }
+
   void logoutSeerr() {
     final user = state;
     if (user == null) return;

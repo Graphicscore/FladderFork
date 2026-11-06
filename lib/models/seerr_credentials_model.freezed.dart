@@ -15,6 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$SeerrCredentialsModel {
   String get serverUrl;
+  String get localServerUrl;
   String get apiKey;
   String get sessionCookie;
   Map<String, String> get customHeaders;
@@ -32,7 +33,7 @@ mixin _$SeerrCredentialsModel {
 
   @override
   String toString() {
-    return 'SeerrCredentialsModel(serverUrl: $serverUrl, apiKey: $apiKey, sessionCookie: $sessionCookie, customHeaders: $customHeaders)';
+    return 'SeerrCredentialsModel(serverUrl: $serverUrl, localServerUrl: $localServerUrl, apiKey: $apiKey, sessionCookie: $sessionCookie, customHeaders: $customHeaders)';
   }
 }
 
@@ -44,6 +45,7 @@ abstract mixin class $SeerrCredentialsModelCopyWith<$Res> {
   @useResult
   $Res call(
       {String serverUrl,
+      String localServerUrl,
       String apiKey,
       String sessionCookie,
       Map<String, String> customHeaders});
@@ -63,6 +65,7 @@ class _$SeerrCredentialsModelCopyWithImpl<$Res>
   @override
   $Res call({
     Object? serverUrl = null,
+    Object? localServerUrl = null,
     Object? apiKey = null,
     Object? sessionCookie = null,
     Object? customHeaders = null,
@@ -71,6 +74,10 @@ class _$SeerrCredentialsModelCopyWithImpl<$Res>
       serverUrl: null == serverUrl
           ? _self.serverUrl
           : serverUrl // ignore: cast_nullable_to_non_nullable
+              as String,
+      localServerUrl: null == localServerUrl
+          ? _self.localServerUrl
+          : localServerUrl // ignore: cast_nullable_to_non_nullable
               as String,
       apiKey: null == apiKey
           ? _self.apiKey
@@ -181,16 +188,16 @@ extension SeerrCredentialsModelPatterns on SeerrCredentialsModel {
 
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>(
-    TResult Function(String serverUrl, String apiKey, String sessionCookie,
-            Map<String, String> customHeaders)?
+    TResult Function(String serverUrl, String localServerUrl, String apiKey,
+            String sessionCookie, Map<String, String> customHeaders)?
         $default, {
     required TResult orElse(),
   }) {
     final _that = this;
     switch (_that) {
       case _SeerrCredentialsModel() when $default != null:
-        return $default(_that.serverUrl, _that.apiKey, _that.sessionCookie,
-            _that.customHeaders);
+        return $default(_that.serverUrl, _that.localServerUrl, _that.apiKey,
+            _that.sessionCookie, _that.customHeaders);
       case _:
         return orElse();
     }
@@ -211,15 +218,15 @@ extension SeerrCredentialsModelPatterns on SeerrCredentialsModel {
 
   @optionalTypeArgs
   TResult when<TResult extends Object?>(
-    TResult Function(String serverUrl, String apiKey, String sessionCookie,
-            Map<String, String> customHeaders)
+    TResult Function(String serverUrl, String localServerUrl, String apiKey,
+            String sessionCookie, Map<String, String> customHeaders)
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _SeerrCredentialsModel():
-        return $default(_that.serverUrl, _that.apiKey, _that.sessionCookie,
-            _that.customHeaders);
+        return $default(_that.serverUrl, _that.localServerUrl, _that.apiKey,
+            _that.sessionCookie, _that.customHeaders);
       case _:
         throw StateError('Unexpected subclass');
     }
@@ -239,15 +246,15 @@ extension SeerrCredentialsModelPatterns on SeerrCredentialsModel {
 
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>(
-    TResult? Function(String serverUrl, String apiKey, String sessionCookie,
-            Map<String, String> customHeaders)?
+    TResult? Function(String serverUrl, String localServerUrl, String apiKey,
+            String sessionCookie, Map<String, String> customHeaders)?
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _SeerrCredentialsModel() when $default != null:
-        return $default(_that.serverUrl, _that.apiKey, _that.sessionCookie,
-            _that.customHeaders);
+        return $default(_that.serverUrl, _that.localServerUrl, _that.apiKey,
+            _that.sessionCookie, _that.customHeaders);
       case _:
         return null;
     }
@@ -259,6 +266,7 @@ extension SeerrCredentialsModelPatterns on SeerrCredentialsModel {
 class _SeerrCredentialsModel extends SeerrCredentialsModel {
   const _SeerrCredentialsModel(
       {this.serverUrl = "",
+      this.localServerUrl = "",
       this.apiKey = "",
       this.sessionCookie = "",
       final Map<String, String> customHeaders = const {}})
@@ -270,6 +278,9 @@ class _SeerrCredentialsModel extends SeerrCredentialsModel {
   @override
   @JsonKey()
   final String serverUrl;
+  @override
+  @JsonKey()
+  final String localServerUrl;
   @override
   @JsonKey()
   final String apiKey;
@@ -303,7 +314,7 @@ class _SeerrCredentialsModel extends SeerrCredentialsModel {
 
   @override
   String toString() {
-    return 'SeerrCredentialsModel(serverUrl: $serverUrl, apiKey: $apiKey, sessionCookie: $sessionCookie, customHeaders: $customHeaders)';
+    return 'SeerrCredentialsModel(serverUrl: $serverUrl, localServerUrl: $localServerUrl, apiKey: $apiKey, sessionCookie: $sessionCookie, customHeaders: $customHeaders)';
   }
 }
 
@@ -317,6 +328,7 @@ abstract mixin class _$SeerrCredentialsModelCopyWith<$Res>
   @useResult
   $Res call(
       {String serverUrl,
+      String localServerUrl,
       String apiKey,
       String sessionCookie,
       Map<String, String> customHeaders});
@@ -336,6 +348,7 @@ class __$SeerrCredentialsModelCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   $Res call({
     Object? serverUrl = null,
+    Object? localServerUrl = null,
     Object? apiKey = null,
     Object? sessionCookie = null,
     Object? customHeaders = null,
@@ -344,6 +357,10 @@ class __$SeerrCredentialsModelCopyWithImpl<$Res>
       serverUrl: null == serverUrl
           ? _self.serverUrl
           : serverUrl // ignore: cast_nullable_to_non_nullable
+              as String,
+      localServerUrl: null == localServerUrl
+          ? _self.localServerUrl
+          : localServerUrl // ignore: cast_nullable_to_non_nullable
               as String,
       apiKey: null == apiKey
           ? _self.apiKey

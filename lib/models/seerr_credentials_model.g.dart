@@ -10,6 +10,7 @@ _SeerrCredentialsModel _$SeerrCredentialsModelFromJson(
         Map<String, dynamic> json) =>
     _SeerrCredentialsModel(
       serverUrl: json['serverUrl'] as String? ?? "",
+      localServerUrl: json['localServerUrl'] as String? ?? "",
       apiKey: json['apiKey'] as String? ?? "",
       sessionCookie: json['sessionCookie'] as String? ?? "",
       customHeaders: (json['customHeaders'] as Map<String, dynamic>?)?.map(
@@ -22,6 +23,7 @@ Map<String, dynamic> _$SeerrCredentialsModelToJson(
         _SeerrCredentialsModel instance) =>
     <String, dynamic>{
       'serverUrl': instance.serverUrl,
+      'localServerUrl': instance.localServerUrl,
       'apiKey': instance.apiKey,
       'sessionCookie': instance.sessionCookie,
       'customHeaders': instance.customHeaders,
