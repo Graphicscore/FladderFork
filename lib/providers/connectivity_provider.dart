@@ -37,21 +37,62 @@ final offlineStateProvider = Provider<bool>((ref) {
 
 final localConnectionAvailableProvider = StateProvider<bool>((ref) => false);
 
+/// Result of the last probe of the account's local Seerr URL, plus whether a
+/// request against that URL has since been rejected.
+typedef SeerrLocalProbe = ({String url, bool reachable, bool rejected});
+
+final seerrLocalProbeProvider = StateProvider<SeerrLocalProbe>(
+  (ref) => (url: '', reachable: false, rejected: false),
+);
+
+/// Whether the local Seerr URL configured right now may be used for requests.
+///
+/// The probe result only counts for the URL it was run against, and a rejection
+/// recorded against that URL outranks a reachable probe: reachability cannot tell
+/// an instance that rejects our credentials from a healthy one.
+final seerrLocalConnectionAvailableProvider = Provider<bool>((ref) {
+  final localUrl = ref.watch(userProvider.select((value) => value?.seerrCredentials?.localServerUrl.trim() ?? ''));
+  final probe = ref.watch(seerrLocalProbeProvider);
+  return localUrl.isNotEmpty && probe.url == localUrl && probe.reachable && !probe.rejected;
+});
+
 @Riverpod(keepAlive: true)
 class ConnectivityStatus extends _$ConnectivityStatus {
   Timer? _debounceTimer;
   int _probeId = 0;
   Completer<void>? _probeCompleter;
+  Completer<void>? _seerrProbeCompleter;
   DateTime? _lastProbe;
 
   @override
   ConnectionState build() {
     ref.listen(
-      userProvider.select((value) => value?.credentials.localUrl),
+      userProvider.select((value) => (
+            value?.id,
+            value?.credentials.localUrl,
+            value?.seerrCredentials?.localServerUrl,
+            value?.seerrCredentials?.apiKey,
+            value?.seerrCredentials?.sessionCookie,
+            // A fingerprint, because the map itself compares by identity and a
+            // rejection must be cleared when the headers that caused it change.
+            (value?.seerrCredentials?.customHeaders ?? const <String, String>{})
+                .entries
+                .map((entry) => '${entry.key}=${entry.value}')
+                .join('&'),
+          )),
       (previous, next) {
-        if (previous != next) {
-          checkConnectivity(immediate: true);
+        if (previous == next) return;
+        // Another account, a different Seerr URL or a changed credential set makes
+        // the previous probe result - including a rejection - meaningless.
+        final seerrChanged = previous?.$1 != next.$1 ||
+            previous?.$3 != next.$3 ||
+            previous?.$4 != next.$4 ||
+            previous?.$5 != next.$5 ||
+            previous?.$6 != next.$6;
+        if (seerrChanged) {
+          ref.read(seerrLocalProbeProvider.notifier).state = (url: '', reachable: false, rejected: false);
         }
+        checkConnectivity(immediate: true);
       },
     );
 
@@ -64,6 +105,7 @@ class ConnectivityStatus extends _$ConnectivityStatus {
       subscription.cancel();
       _probeId++;
       _resolveProbe();
+      _resolveSeerrProbe();
     });
 
     checkConnectivity(immediate: true);
@@ -84,6 +126,11 @@ class ConnectivityStatus extends _$ConnectivityStatus {
 
   Future<void> waitForProbe() async => _probeCompleter?.future;
 
+  /// Waits for the Seerr probe that is already queued for the current network
+  /// state, so a request does not route on a superseded result. Returns
+  /// immediately when no probe is pending (nothing to wait for).
+  Future<void> waitForSeerrProbe() async => _seerrProbeCompleter?.future;
+
   void _handleHardwareChange(List<ConnectivityResult> results, {bool immediate = false}) {
     final hardwareState = _parseHardwareState(results);
 
@@ -91,7 +138,9 @@ class ConnectivityStatus extends _$ConnectivityStatus {
       _debounceTimer?.cancel();
       _probeId++;
       _resolveProbe();
+      _resolveSeerrProbe();
       _updateState(ConnectionState.offline, isLocal: false);
+      ref.read(seerrLocalProbeProvider.notifier).state = (url: '', reachable: false, rejected: false);
       return;
     }
 
@@ -102,6 +151,7 @@ class ConnectivityStatus extends _$ConnectivityStatus {
     _debounceTimer?.cancel();
     final id = ++_probeId;
     _probeCompleter ??= Completer<void>();
+    _seerrProbeCompleter ??= Completer<void>();
 
     if (immediate) {
       unawaited(_probeReachability(id, candidateState));
@@ -115,6 +165,9 @@ class ConnectivityStatus extends _$ConnectivityStatus {
 
   Future<void> _probeReachability(int id, ConnectionState candidateState) async {
     _lastProbe = DateTime.now();
+    // The Seerr probe runs alongside the Jellyfin checks and resolves its own
+    // barrier when it finishes; Jellyfin requests must not wait for it.
+    unawaited(_probeSeerrLocal(id));
     try {
       final user = ref.read(userProvider);
       if (user == null) return;
@@ -156,6 +209,41 @@ class ConnectivityStatus extends _$ConnectivityStatus {
         _resolveProbe();
       }
     }
+  }
+
+  Future<void> _probeSeerrLocal(int id) async {
+    var localUrl = '';
+    var reachable = false;
+    try {
+      localUrl = ref.read(userProvider)?.seerrCredentials?.localServerUrl.trim() ?? '';
+      if (localUrl.isNotEmpty) {
+        final permission = await checkLocalNetworkPermission();
+        if (permission == LocalNetworkPermissionStatus.granted) {
+          reachable = await fetchSeerrStatusDynamic(normalizeUrl(localUrl));
+        }
+      }
+    } catch (e) {
+      log('Seerr local probe failed: $e');
+    }
+    if (_probeId != id) return;
+
+    // A rejection recorded against this same URL survives the probe: a reachable
+    // status endpoint cannot tell an instance that rejects our credentials from a
+    // healthy one, so letting the probe clear it would flap every probe cycle.
+    final previous = ref.read(seerrLocalProbeProvider);
+    ref.read(seerrLocalProbeProvider.notifier).state = (
+      url: localUrl,
+      reachable: reachable,
+      rejected: previous.url == localUrl && previous.rejected,
+    );
+    _resolveSeerrProbe();
+  }
+
+  void _resolveSeerrProbe() {
+    if (!(_seerrProbeCompleter?.isCompleted ?? true)) {
+      _seerrProbeCompleter?.complete();
+    }
+    _seerrProbeCompleter = null;
   }
 
   void _updateState(ConnectionState newState, {required bool isLocal}) {

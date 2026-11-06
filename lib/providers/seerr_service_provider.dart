@@ -9,7 +9,7 @@ import 'package:fladder/models/items/images_models.dart';
 import 'package:fladder/models/seerr/seerr_dashboard_model.dart';
 import 'package:fladder/models/seerr/seerr_item_models.dart';
 import 'package:fladder/providers/connectivity_provider.dart';
-import 'package:fladder/providers/user_provider.dart';
+import 'package:fladder/providers/seerr_server_url_provider.dart';
 import 'package:fladder/seerr/seerr_chopper_service.dart';
 import 'package:fladder/seerr/seerr_models.dart';
 
@@ -31,7 +31,7 @@ class SeerrService {
 
     final avatar = user.avatar;
     if (avatar != null && avatar.isNotEmpty) {
-      final serverUrl = ref.read(userProvider)?.seerrCredentials?.serverUrl;
+      final serverUrl = ref.read(seerrServerUrlProvider);
       final resolvedAvatar = resolveServerUrl(path: avatar, serverUrl: serverUrl);
 
       if (resolvedAvatar != avatar) {
@@ -110,7 +110,7 @@ class SeerrService {
   Future<List<SeerrUserModel>> users({int? take, int? skip, String sort = 'displayname'}) async {
     final response = await _api.getUsers(take: take, skip: skip, sort: sort);
     final results = response.body?.results ?? [];
-    final serverUrl = ref.read(userProvider)?.seerrCredentials?.serverUrl;
+    final serverUrl = ref.read(seerrServerUrlProvider);
 
     return results.map((user) {
       final avatar = user.avatar;

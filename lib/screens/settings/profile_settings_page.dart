@@ -30,6 +30,7 @@ import 'package:fladder/screens/shared/authenticate_button_options.dart';
 import 'package:fladder/screens/shared/input_fields.dart';
 import 'package:fladder/seerr/seerr_models.dart';
 import 'package:fladder/services/battery_optimization.dart';
+import 'package:fladder/services/local_network_permission.dart';
 import 'package:fladder/services/notification_service.dart';
 import 'package:fladder/util/jellyfin_extension.dart';
 import 'package:fladder/util/localization_helper.dart';
@@ -107,6 +108,7 @@ class _UserSettingsPageState extends ConsumerState<ProfileSettingsPage> with Wid
   Widget build(BuildContext context) {
     final user = ref.watch(userProvider);
     final seerrUser = ref.watch(seerrUserProvider);
+    final seerrLocalServerUrl = user?.seerrCredentials?.localServerUrl ?? '';
     final cultures = ref.watch(culturesProvider);
     final clientSettings = ref.watch(clientSettingsProvider);
     final lastUpdateAt = ref.watch(notificationsProvider).updatedAt;
@@ -355,6 +357,46 @@ class _UserSettingsPageState extends ConsumerState<ProfileSettingsPage> with Wid
               label: Text(context.localized.seerr),
               subLabel: Text(_seerrStatusLabel(context, user?.seerrCredentials, seerrUser)),
               onTap: () => showSeerrConnectionDialog(context),
+            ),
+            SettingsListTile(
+              label: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                spacing: 8,
+                children: [
+                  if (seerrLocalServerUrl.isNotEmpty)
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: ref.watch(seerrLocalConnectionAvailableProvider)
+                            ? Colors.greenAccent
+                            : Theme.of(context).colorScheme.error,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  Text(context.localized.seerrLocalUrlTitle),
+                ],
+              ),
+              subLabel: Text(seerrLocalServerUrl.isNotEmpty ? seerrLocalServerUrl : context.localized.none),
+              onTap: () {
+                openSimpleTextInput(
+                  context,
+                  seerrLocalServerUrl,
+                  (value) async {
+                    ref.read(userProvider.notifier).setSeerrLocalServerUrl(value);
+                    final saved = ref.read(userProvider)?.seerrCredentials?.localServerUrl ?? '';
+                    if (saved.isEmpty) return;
+                    // The probe that the edit triggered ran before the dialog was
+                    // answered, so re-probe once access is granted.
+                    if (await ensureLocalNetworkPermission(saved, context)) {
+                      await ref.read(connectivityStatusProvider.notifier).checkConnectivity(immediate: true);
+                    }
+                  },
+                  context.localized.seerrLocalUrlSetTitle,
+                  context.localized.seerrLocalUrlSetDesc,
+                  placeHolder: 'http://192.168.1.1:5055, 192.168.1.1:5055',
+                );
+              },
             ),
             if (seerrUser?.canManageRequests ?? false)
               SettingsListTileCheckbox(

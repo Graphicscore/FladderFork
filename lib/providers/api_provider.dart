@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
 
@@ -171,6 +172,26 @@ Future<String?> _probeUrl(String baseUrl, String endpoint) async {
 
 /// Probes a Seerr server URL by hitting /api/v1/status.
 Future<String?> probeSeerrUrl(String baseUrl) => _probeUrl(baseUrl, '/api/v1/status');
+
+/// Probes a local Seerr URL by fetching its public status endpoint.
+/// Only a 2xx response carrying a Seerr-style JSON body with a non-empty
+/// `version` field counts, so captive portals answering 200 don't match.
+Future<bool> fetchSeerrStatusDynamic(String baseUrl) async {
+  if (baseUrl.isEmpty) return false;
+  final uri = buildServerUriFromBase(baseUrl, pathSegments: const ['api', 'v1', 'status']);
+  if (uri == null) return false;
+  try {
+    final response = await http.get(uri).timeout(const Duration(seconds: 2));
+    if (response.statusCode < 200 || response.statusCode >= 300) return false;
+    final decoded = jsonDecode(response.body);
+    if (decoded is! Map<String, dynamic>) return false;
+    final version = decoded['version'];
+    return version is String && version.isNotEmpty;
+  } catch (e) {
+    log('Seerr status probe failed for $baseUrl: $e');
+    return false;
+  }
+}
 
 /// Probes a Jellyfin server URL by hitting /System/Info/Public.
 Future<String?> probeJellyfinUrl(String baseUrl) => _probeUrl(baseUrl, '/System/Info/Public');

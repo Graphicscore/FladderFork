@@ -6,8 +6,9 @@ import 'package:iconsax_plus/iconsax_plus.dart';
 
 import 'package:fladder/models/item_base_model.dart';
 import 'package:fladder/models/seerr/seerr_dashboard_model.dart';
+import 'package:fladder/models/seerr/seerr_item_models.dart';
 import 'package:fladder/providers/seerr/seerr_request_provider.dart';
-import 'package:fladder/providers/user_provider.dart';
+import 'package:fladder/providers/seerr_server_url_provider.dart';
 import 'package:fladder/screens/seerr/widgets/request_configuration_section.dart';
 import 'package:fladder/screens/seerr/widgets/request_popup_widgets.dart';
 import 'package:fladder/screens/seerr/widgets/seasons_section.dart';
@@ -74,11 +75,11 @@ class _SeerrRequestPopupState extends ConsumerState<SeerrRequestPopup> {
   }
 
   Future<void> openSeerrLink(BuildContext context, SeerrDashboardPosterModel model) async {
-    final seerrUrl = ref.read(userProvider)?.seerrCredentials?.serverUrl;
-    if (seerrUrl != null && seerrUrl.isNotEmpty) {
+    final seerrUrl = ref.read(seerrServerUrlProvider);
+    if (seerrUrl.isNotEmpty) {
       final mediaType = model.type == SeerrMediaType.movie ? 'movie' : 'tv';
-      final url = '$seerrUrl/$mediaType/${model.tmdbId}';
-      launchUrl(context, url);
+      final url = resolveServerUrl(path: '$mediaType/${model.tmdbId}', serverUrl: seerrUrl);
+      if (url != null) launchUrl(context, url);
     }
   }
 

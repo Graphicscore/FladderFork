@@ -4,9 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 
 import 'package:fladder/models/seerr/seerr_dashboard_model.dart';
+import 'package:fladder/models/seerr/seerr_item_models.dart';
 import 'package:fladder/providers/seerr_api_provider.dart';
+import 'package:fladder/providers/seerr_server_url_provider.dart';
 import 'package:fladder/providers/seerr_user_provider.dart';
-import 'package:fladder/providers/user_provider.dart';
 import 'package:fladder/screens/shared/fladder_notification_overlay.dart';
 import 'package:fladder/screens/shared/media/external_urls.dart';
 import 'package:fladder/seerr/seerr_models.dart';
@@ -94,12 +95,11 @@ class _MediaManagementActionsState extends ConsumerState<_MediaManagementActions
         label: Text(context.localized.openInSeerr),
         backgroundColor: Colors.deepPurpleAccent.shade700,
         action: () {
-          final seerrUrl = ref.read(userProvider.select((value) => value?.seerrCredentials?.serverUrl));
-          if (isTvSeries) {
-            launchUrl(context, '$seerrUrl/tv/${widget.poster.tmdbId}');
-          } else {
-            launchUrl(context, '$seerrUrl/movie/${widget.poster.tmdbId}');
-          }
+          final seerrUrl = ref.read(seerrServerUrlProvider);
+          if (seerrUrl.isEmpty) return;
+          final path = isTvSeries ? 'tv/${widget.poster.tmdbId}' : 'movie/${widget.poster.tmdbId}';
+          final url = resolveServerUrl(path: path, serverUrl: seerrUrl);
+          if (url != null) launchUrl(context, url);
         },
       ),
       if (itemModel != null)
