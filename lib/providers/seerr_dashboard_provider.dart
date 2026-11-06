@@ -4,8 +4,8 @@ import 'package:fladder/models/seerr/seerr_dashboard_model.dart';
 import 'package:fladder/models/seerr/seerr_item_models.dart';
 import 'package:fladder/providers/seerr_api_provider.dart';
 import 'package:fladder/providers/seerr_service_provider.dart';
+import 'package:fladder/providers/seerr_server_url_provider.dart';
 import 'package:fladder/providers/seerr_user_provider.dart';
-import 'package:fladder/providers/user_provider.dart';
 import 'package:fladder/seerr/seerr_models.dart';
 
 part 'seerr_dashboard_provider.g.dart';
@@ -129,7 +129,7 @@ class SeerrDashboard extends _$SeerrDashboard {
     if (requestedByUser != null) {
       final avatar = requestedByUser.avatar;
       if (avatar != null && avatar.isNotEmpty) {
-        final serverUrl = ref.read(userProvider)?.seerrCredentials?.serverUrl;
+        final serverUrl = ref.read(seerrServerUrlProvider);
         final resolvedAvatar = resolveServerUrl(path: avatar, serverUrl: serverUrl);
 
         processedUser = resolvedAvatar != avatar ? requestedByUser.copyWith(avatar: resolvedAvatar) : requestedByUser;

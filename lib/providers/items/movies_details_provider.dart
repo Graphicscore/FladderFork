@@ -10,9 +10,11 @@ import 'package:fladder/models/items/media_streams_model.dart';
 import 'package:fladder/models/items/movie_model.dart';
 import 'package:fladder/models/items/special_feature_model.dart';
 import 'package:fladder/models/seerr/seerr_dashboard_model.dart';
+import 'package:fladder/models/seerr/seerr_item_models.dart';
 import 'package:fladder/providers/api_provider.dart';
 import 'package:fladder/providers/related_provider.dart';
 import 'package:fladder/providers/seerr_api_provider.dart';
+import 'package:fladder/providers/seerr_server_url_provider.dart';
 import 'package:fladder/providers/service_provider.dart';
 import 'package:fladder/providers/user_provider.dart';
 import 'package:fladder/seerr/seerr_models.dart';
@@ -74,8 +76,8 @@ class MovieDetails extends _$MovieDetails {
           );
           final status = seerrPoster?.mediaInfo?.mediaStatus;
           if (status != SeerrMediaStatus.unknown) {
-            final seerrServerUrl = ref.read(userProvider.select((value) => value?.seerrCredentials?.serverUrl));
-            seerrUrl = '${seerrServerUrl}movie/$tmdbId';
+            final seerrServerUrl = ref.read(seerrServerUrlProvider);
+            seerrUrl = resolveServerUrl(path: 'movie/$tmdbId', serverUrl: seerrServerUrl);
           }
         }
       }
